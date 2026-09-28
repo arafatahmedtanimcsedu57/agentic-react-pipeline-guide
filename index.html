@@ -1,0 +1,1961 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentic React Pipeline</title>
+    <meta
+      name="description"
+      content="A detailed guide to a spec-driven, self-correcting agentic development pipeline for React: commands, agents, hooks, loops and human gates."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <button class="menu-btn" type="button" aria-label="Open contents">
+      ☰ Contents
+    </button>
+    <div class="layout">
+      <nav class="sidebar" aria-label="Contents">
+        <p class="brand">Agentic React Pipeline</p>
+        <p class="brand-sub">Spec-driven · self-correcting · human-gated</p>
+        <ol class="toc">
+          <li><a href="#intro">The big idea</a></li>
+          <li><a href="#overview">Pipeline at a glance</a></li>
+          <li><a href="#roles">Who owns what</a></li>
+          <li><a href="#commands">The six commands</a></li>
+          <li><a href="#lifecycle">Life of a change</a></li>
+          <li><a href="#phases">Phase by phase</a></li>
+          <li><a href="#gates">The human gates</a></li>
+          <li><a href="#loops">Self-correction loops</a></li>
+          <li><a href="#hooks">Hooks in depth</a></li>
+          <li><a href="#permissions">Permissions + guard</a></li>
+          <li><a href="#agents">Agents, skills, rules</a></li>
+          <li><a href="#autopilot">Autopilot + @claude</a></li>
+          <li><a href="#fix">The /fix lane</a></li>
+          <li><a href="#design">Design → code</a></li>
+          <li><a href="#ci">CI + pull requests</a></li>
+          <li><a href="#defence">Defence in depth</a></li>
+          <li><a href="#files">File reference</a></li>
+          <li><a href="#daily">Daily loop + teaching notes</a></li>
+        </ol>
+        <button class="theme-btn" type="button">◐ Toggle theme</button>
+      </nav>
+
+      <main>
+        <!-- ============================================================ 1 -->
+        <section id="intro" class="hero">
+          <p class="eyebrow">Course guide · Agentic development for React</p>
+          <h1>
+            How an AI agent builds a React feature, and where people stay in
+            charge
+          </h1>
+          <p class="lede">
+            This guide covers a pipeline built with Claude Code for a React 19 +
+            Vite + TypeScript app. The agent plans, designs, specs, codes, tests
+            and opens pull requests. Tools check its work after every edit, and
+            a person approves at exactly two gates. Each section below covers
+            one part: the commands, the agents, the hooks, the loops and the
+            gates.
+          </p>
+
+          <div class="principle">
+            <strong>The one principle:</strong> automation does not remove the
+            human gate. It <em>moves</em> it to the pull request. Everything
+            before the PR can be automated heavily because nothing reaches
+            <code>main</code> until CI is green <em>and</em> a human approves.
+          </div>
+
+          <ul class="legend" aria-label="Colour legend">
+            <li>
+              <span class="swatch sw-human"></span>Human: intent, decisions,
+              merges
+            </li>
+            <li>
+              <span class="swatch sw-agent"></span>Agent: planning and execution
+            </li>
+            <li>
+              <span class="swatch sw-machine"></span>Machine: hooks, CI,
+              deterministic checks
+            </li>
+            <li>
+              <span class="swatch sw-gate"></span>Gate: a hard stop for a human
+              decision
+            </li>
+            <li><span class="swatch sw-file"></span>File / artifact</li>
+          </ul>
+
+          <div class="stats">
+            <div class="stat">
+              <b>6</b><span>slash commands, the human’s only interface</span>
+            </div>
+            <div class="stat">
+              <b>2</b><span>human gates that are never skipped</span>
+            </div>
+            <div class="stat">
+              <b>3</b
+              ><span>hooks: before a command, after an edit, at turn end</span>
+            </div>
+            <div class="stat">
+              <b>2 + 2</b><span>subagents + GitHub Actions agents</span>
+            </div>
+            <div class="stat">
+              <b>400</b><span>reviewable lines, maximum per PR</span>
+            </div>
+            <div class="stat">
+              <b>3</b
+              ><span>failed attempts, then the agent stops and asks</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ 2 -->
+        <section id="overview">
+          <p class="eyebrow">Diagram 1</p>
+          <h2>The pipeline at a glance</h2>
+          <p>
+            Read it left to right. Each lane is an owner. Red boxes are the two
+            gates. Red arrows are feedback loops, where a check fails and
+            control goes back to the agent. Use <b>Next</b> to walk it one stage
+            at a time, or use ← → on the keyboard after clicking a button.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="overview"></div>
+            <div class="stepper" data-stepper="overview">
+              <button type="button" data-prev>← Prev</button>
+              <button type="button" class="primary" data-next>Next →</button>
+              <button type="button" data-all>Show all</button>
+              <span class="count"></span>
+            </div>
+            <div
+              class="step-caption"
+              data-caption="overview"
+              aria-live="polite"
+            ></div>
+          </div>
+
+          <h3>The same flow as text</h3>
+          <pre>
+DEFINE          plan mode → features.md · tech + tokens → architecture.md · API contract first
+DESIGN          Claude Design: theme (/start) + one page per feature (/feature)
+                you edit the design yourself on claude.ai
+SPEC            OpenSpec propose → proposal.md · delta specs · design.md · tasks.md
+  ★ GATE 1      /build: you approve design + tasks.md  → "approved: &lt;name&gt;, &lt;date&gt;"
+IMPLEMENT       snapshot design/ → branch → apply tasks one by one, tests as you go
+  ↻ loops         every edit:  prettier + eslint + tsc          (errors fed back, exit 2)
+                  turn end:    related tests + react-doctor     (errors fed back once)
+                  done gate:   npm run check + e2e/axe + screenshots vs artboards
+VERIFY          CI: approvals · quality · PR size   +  preview deploy
+  ★ GATE 2      you review PR + preview, then merge  (agent can never merge)
+LEARN           /finish → living specs · repeated corrections → proposed CLAUDE.md rule</pre>
+        </section>
+
+        <!-- ============================================================ 3 -->
+        <section id="roles">
+          <p class="eyebrow">Ownership</p>
+          <h2>Who owns what</h2>
+          <p>
+            The pipeline divides work into three roles. Most mistakes in agentic
+            development happen when these roles blur: the agent makes product
+            decisions, or a person rereads code that a tool could have checked.
+          </p>
+          <div class="grid">
+            <div class="card human">
+              <h4>
+                <span class="tag human">Human</span> owns intent + decisions
+              </h4>
+              <ul>
+                <li>
+                  Describes the feature (plan mode → <code>features.md</code>)
+                </li>
+                <li>Edits the design on claude.ai</li>
+                <li>Answers Gate 1: “yes” / “yes except 2”</li>
+                <li>Reviews the PR + preview and <b>merges</b> (Gate 2)</li>
+                <li>Adds labels, branch protection, CODEOWNERS</li>
+                <li>Agrees (or not) to new <code>CLAUDE.md</code> rules</li>
+              </ul>
+            </div>
+            <div class="card agent">
+              <h4><span class="tag agent">Agent</span> owns execution</h4>
+              <ul>
+                <li>Writes requirements, designs screens, writes specs</li>
+                <li>Sends short gate briefs that ask for decisions</li>
+                <li>Implements <code>tasks.md</code> with tests</li>
+                <li>Fixes whatever hooks/CI report, up to 3 attempts</li>
+                <li>Opens the PR with the full template</li>
+                <li>Archives specs, proposes rules</li>
+              </ul>
+            </div>
+            <div class="card machine">
+              <h4><span class="tag machine">Machine</span> owns enforcement</h4>
+              <ul>
+                <li>Hooks: format, lint, typecheck on every edit</li>
+                <li>Hooks: related tests + react-doctor at turn end</li>
+                <li>Guard hook: blocks merges / force pushes</li>
+                <li>CI: typecheck, lint, tests, e2e, bundle, doctor</li>
+                <li>CI: PR size ≤ 400, bot-approval detection</li>
+                <li>Branch protection: the final backstop</li>
+              </ul>
+            </div>
+          </div>
+          <div class="callout human">
+            <p>
+              <b>What this costs the reviewer each week:</b> about 5 min per
+              Gate 1 brief, 10–20 min per Gate 2 PR (preview click-through plus
+              the “Review carefully” lines), and a quick look each morning at
+              autopilot’s “Question:” and “Split needed:” issues.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============================================================ 4 -->
+        <section id="commands">
+          <p class="eyebrow">Interface</p>
+          <h2>The six slash commands</h2>
+          <p>
+            The human uses only these six commands. Everything else (the
+            <code>feature-pipeline</code> skill, the
+            <code>openspec-*</code> skills and the subagents) is internal: the
+            agent calls them itself.
+          </p>
+
+          <div data-tabs>
+            <div class="tabs" role="tablist" aria-label="Commands">
+              <button
+                role="tab"
+                aria-selected="true"
+                aria-controls="t-start"
+                id="tb-start"
+              >
+                /start
+              </button>
+              <button
+                role="tab"
+                aria-selected="false"
+                aria-controls="t-feature"
+                id="tb-feature"
+              >
+                /feature
+              </button>
+              <button
+                role="tab"
+                aria-selected="false"
+                aria-controls="t-build"
+                id="tb-build"
+              >
+                /build
+              </button>
+              <button
+                role="tab"
+                aria-selected="false"
+                aria-controls="t-sync"
+                id="tb-sync"
+              >
+                /sync-ui
+              </button>
+              <button
+                role="tab"
+                aria-selected="false"
+                aria-controls="t-finish"
+                id="tb-finish"
+              >
+                /finish
+              </button>
+              <button
+                role="tab"
+                aria-selected="false"
+                aria-controls="t-fix"
+                id="tb-fix"
+              >
+                /fix
+              </button>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="t-start"
+              aria-labelledby="tb-start"
+            >
+              <p class="cmd">/start</p>
+              <p>
+                <b>Once per project.</b> Turns a copy of the template into your
+                project. It never scaffolds a new app and asks before every
+                step, one decision at a time, with a recommended default.
+              </p>
+              <ol>
+                <li>
+                  <b>Check it’s a fresh copy</b>: the package name is still the
+                  template’s and the example feature exists.
+                </li>
+                <li>
+                  <b>Name the project</b>: package.json, the CLAUDE.md title,
+                  the README.
+                </li>
+                <li>
+                  <b>Styling + UI library</b>: Tailwind (default) / CSS Modules
+                  / Sass / CSS-in-JS, and shadcn/ui (default) / MUI / Chakra /
+                  AntD / Radix / none. Conflicts are flagged. Choices are
+                  recorded in <code>architecture.md</code> with who decided and
+                  when.
+                </li>
+                <li>
+                  <b>Remove the example</b> <code>items</code> feature, leaving
+                  a placeholder home page and keeping the test harness green.
+                </li>
+                <li>
+                  <b>First intent</b>: 1–3 features in <code>features.md</code>,
+                  the API situation (OpenAPI / informal / frontend-first) and
+                  hosting.
+                </li>
+                <li>
+                  <b>Design</b>: a Claude Design <i>Design System</i> (tokens) +
+                  a <i>canvas</i> with one page per feature. Tokens are written
+                  into the <code>@theme</code> block.
+                </li>
+                <li>
+                  <b>Commit + PR</b> on <code>chore/project-setup</code>, with a
+                  “Why this is N lines” breakdown because the setup PR is always
+                  large.
+                </li>
+                <li>
+                  <b>GitHub checklist for the human</b>: install the GitHub app,
+                  CODEOWNERS, branch protection, the
+                  <code>large-pr-approved</code> label, and optionally
+                  <code>AUTOPILOT_ENABLED</code>.
+                </li>
+              </ol>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="t-feature"
+              aria-labelledby="tb-feature"
+              hidden
+            >
+              <p class="cmd">/feature &lt;idea&gt;</p>
+              <p>
+                <b
+                  >Plans one change: intent → design → spec. It writes no
+                  application code.</b
+                >
+                It moves quickly on routine, reversible steps, and confirms
+                before installs, pushes or PRs.
+              </p>
+              <ol>
+                <li>
+                  <b>Define</b>: behaviour, states, edge cases and open
+                  questions go into <code>features.md</code>. If an API is
+                  involved, the contract is settled first.
+                </li>
+                <li>
+                  <b>Design check</b>: an existing page is reused; with no page,
+                  one is designed (an artboard per state per width in the
+                  existing look); a change with no UI skips design.
+                </li>
+                <li>
+                  <b>Spec</b>: the <code>openspec-propose</code> skill. Over 400
+                  lines → split. <code>tasks.md</code> ends with
+                  <code>approved: &lt;pending&gt;</code>.
+                </li>
+                <li>
+                  <b>Hand over and STOP</b>, with a short summary: risk, size,
+                  design link, open decisions with defaults, and “edit the
+                  design, then run <code>/build &lt;change&gt;</code>”.
+                </li>
+              </ol>
+              <p class="muted small">
+                Given an existing change name, it only shows that change’s
+                status and the next command.
+              </p>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="t-build"
+              aria-labelledby="tb-build"
+              hidden
+            >
+              <p class="cmd">/build &lt;change-name&gt;</p>
+              <p>
+                <b>Gate 1 → code → verify → PR.</b> This is where most of the
+                automation runs.
+              </p>
+              <ol>
+                <li>
+                  <b>Re-read the live design.</b> Diff it against
+                  <code>design.md</code> / <code>tasks.md</code>. Behaviour
+                  differences update the spec.
+                </li>
+                <li>
+                  <b>GATE 1 brief</b> (skipped only if a human’s
+                  <code>approved:</code> line already exists, for example from a
+                  merged spec PR). Waits for an explicit “yes”.
+                </li>
+                <li>
+                  <b>Snapshot</b> the approved page into
+                  <code>design/</code> (artboards, <code>canvas.json</code>,
+                  <code>tokens.json</code>) and sync tokens.
+                </li>
+                <li>
+                  <b>Implement</b> on <code>feat/&lt;change&gt;</code> with
+                  <code>openspec-apply-change</code>, task by task, with tests.
+                  <code>react-reviewer</code> runs after each chunk. Decisions
+                  and dead ends are logged in <code>notes.md</code>.
+                </li>
+                <li>
+                  <b>Verify</b>: <code>npm run check</code> +
+                  <code>npm run test:e2e</code> (axe) + screenshots vs
+                  artboards. Three failed attempts → stop.
+                </li>
+                <li>
+                  <b>Ship + GATE 2</b>: confirm, push, open the PR with every
+                  template section filled. STOP. Never merge.
+                </li>
+              </ol>
+              <p class="muted small">
+                Resumable: after <code>/clear</code>, running
+                <code>/build</code> again sees the approved line, reads
+                <code>notes.md</code> and skips to the first unticked task.
+              </p>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="t-sync"
+              aria-labelledby="tb-sync"
+              hidden
+            >
+              <p class="cmd">/sync-ui [feature]</p>
+              <p>
+                <b
+                  >Brings the code up to date with design edits made after a
+                  feature shipped.</b
+                >
+              </p>
+              <ol>
+                <li>
+                  <b>Diff</b> the live Design System + canvas against
+                  <code>design/</code>. Only pages already built count.
+                </li>
+                <li>
+                  <b>Classify</b> each difference: <i>visual</i> (colour,
+                  spacing, copy, token value) or <i>behaviour</i> (a new field,
+                  screen or flow).
+                </li>
+                <li>
+                  Behaviour changes → <code>openspec-propose</code> → “run
+                  <code>/build</code> for these”. They are not coded here.
+                </li>
+                <li>
+                  Visual changes, after a “yes” → a small low-risk change
+                  <code>ui-sync-&lt;date&gt;</code>, whose approval line records
+                  that human “yes”, on branch
+                  <code>chore/ui-sync-&lt;date&gt;</code>.
+                </li>
+                <li>
+                  Verify, then PR → Gate 2, then
+                  <code>/finish ui-sync-&lt;date&gt;</code>.
+                </li>
+              </ol>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="t-finish"
+              aria-labelledby="tb-finish"
+              hidden
+            >
+              <p class="cmd">/finish &lt;change-name&gt;</p>
+              <p>
+                <b>After a human merges.</b> Closes the loop so the spec matches
+                what shipped.
+              </p>
+              <ol>
+                <li>
+                  <b>Check it’s merged</b>: pull the default branch. If the code
+                  isn’t there, stop.
+                </li>
+                <li>
+                  <b>Archive</b> with <code>openspec-archive-change</code>,
+                  which syncs the delta specs into
+                  <code>openspec/specs/</code> (the living spec).
+                </li>
+                <li><b>Mark it shipped</b> in <code>features.md</code>.</li>
+                <li>
+                  <b>Bookkeeping PR</b> on
+                  <code>chore/archive-&lt;change&gt;</code>. Never pushes to the
+                  default branch.
+                </li>
+                <li>
+                  <b>Learn</b>: if a human made the same correction twice at the
+                  gates, propose a one-line <code>CLAUDE.md</code> rule.
+                </li>
+              </ol>
+            </div>
+
+            <div
+              class="tabpanel"
+              role="tabpanel"
+              id="t-fix"
+              aria-labelledby="tb-fix"
+              hidden
+            >
+              <p class="cmd">/fix &lt;bug&gt;</p>
+              <p>
+                <b
+                  >A lighter lane for bugs in behaviour that is already
+                  specified and shipped.</b
+                >
+                The failing test is the spec, so there is no Gate 1, but Gate 2
+                still applies. Full flowchart in
+                <a href="#fix">The /fix lane</a>.
+              </p>
+              <p>
+                Reproduce → branch <code>fix/&lt;slug&gt;</code> → RED test →
+                GREEN minimal fix → add the missing spec scenario if there was a
+                gap → verify → PR → stop.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ 5 -->
+        <section id="lifecycle">
+          <p class="eyebrow">Diagram 2</p>
+          <h2>Life of one change</h2>
+          <p>
+            Every piece of work is an <b>OpenSpec change</b>: a folder in
+            <code>openspec/changes/&lt;name&gt;/</code>. One change = one branch
+            = one PR. The state is written in the files. The last line of
+            <code>tasks.md</code> shows whether a human approved it.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="lifecycle"></div>
+            <p class="figcaption">
+              Blue loops are normal iteration. Red is a failure sending work
+              back. Dashed lines are the two side entrances:
+              <code>/fix</code> for bugs, and <code>/sync-ui</code> for design
+              edits after release.
+            </p>
+          </div>
+          <h3>What lives in a change folder</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>File</th>
+                  <th>Written by</th>
+                  <th>Holds</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>proposal.md</code></td>
+                  <td>agent</td>
+                  <td>
+                    “Risk tier:” line, what &amp; why,
+                    <b>Open questions</b> (each with a default), Non-goals,
+                    <code>depends on:</code>, new deps with justification
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>specs/&lt;capability&gt;/spec.md</code></td>
+                  <td>agent</td>
+                  <td>
+                    Delta spec: requirements + scenarios this change adds or
+                    modifies
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>design.md</code></td>
+                  <td>agent</td>
+                  <td>
+                    Which artboards
+                    (<code>&lt;slug&gt;/&lt;State&gt;.dc.html</code>) it
+                    implements + canvas link
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>tasks.md</code></td>
+                  <td>agent → <b>human</b></td>
+                  <td>
+                    First line “Estimated reviewable lines: n”. Tasks ordered
+                    contract → logic → UI → wiring → e2e, each with a test task.
+                    <b>Last line:</b> <code>approved: &lt;pending&gt;</code>,
+                    which only a human replaces
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>notes.md</code></td>
+                  <td>agent</td>
+                  <td>
+                    Running log: decisions made without asking, dead ends. Feeds
+                    the PR and resumed sessions
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>screenshots/</code></td>
+                  <td>agent</td>
+                  <td>
+                    <code>&lt;State&gt;-&lt;width&gt;.png</code> from the visual
+                    self-check
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ============================================================ 6 -->
+        <section id="phases">
+          <p class="eyebrow">Detail</p>
+          <h2>Phase by phase</h2>
+
+          <details open>
+            <summary>Phase 0: one-time setup</summary>
+            <p>
+              Create the repo with “Use this template”, then
+              <code>npm ci &amp;&amp; npx playwright install chromium</code> and
+              run <code>/start</code>. The human does the GitHub work:
+              <code>/install-github-app</code> (API key secret), real
+              CODEOWNERS, <b>branch protection</b> (require CI incl.
+              <code>approvals</code> + PR size, 1 review, Code Owner review),
+              preview deploys, and the <code>large-pr-approved</code> label.
+              Autopilot stays off until the
+              <code>AUTOPILOT_ENABLED=true</code> variable is set.
+            </p>
+          </details>
+
+          <details open>
+            <summary>
+              Phase 1: Define <span class="tag human">human-led</span>
+            </summary>
+            <ul>
+              <li>
+                Vague request → discuss in <b>plan mode</b> first. No code.
+              </li>
+              <li>
+                <code>features.md</code>: user-facing behaviour,
+                <b>states</b> (Default / Loading / Empty / Error), edge cases,
+                open questions.
+              </li>
+              <li>
+                <code>architecture.md</code>: styling + UI library, design
+                tokens, API contract source, design links.
+              </li>
+              <li>
+                <b>Contract first.</b> OpenAPI exists → generate RTK Query with
+                <code>npm run gen:api</code> (or hand-write if the spec is
+                messy). Informal (Postman, sample JSON) → Zod schemas. No API
+                yet → write Zod first, mock with MSW, build against the mock.
+              </li>
+              <li>
+                These two files are the <i>inputs</i> to OpenSpec. Nobody keeps
+                a second spec by hand.
+              </li>
+            </ul>
+          </details>
+
+          <details open>
+            <summary>
+              Phase 2: Design <span class="tag agent">agent</span> +
+              <span class="tag human">human edits</span>
+            </summary>
+            <p>
+              One Claude Design canvas per project, <b>one page per feature</b>,
+              one artboard per state per width (default mobile 390 + desktop
+              1280). The copy is real, from <code>features.md</code>, never
+              lorem ipsum. Designs are accessible as drawn: real buttons,
+              labelled inputs, contrast ≥ 4.5:1. Open decisions sit on the
+              canvas as orange sticky notes. The agent always rereads the live
+              canvas and never builds from memory.
+            </p>
+          </details>
+
+          <details open>
+            <summary>
+              Phase 3: Spec + Gate 1 <span class="tag agent">agent</span> →
+              <span class="tag gate">gate</span>
+            </summary>
+            <p>
+              <code>openspec-propose</code> writes the change folder under the
+              rules in <code>openspec/config.yaml</code>.
+              <b>Size it before the gate</b>: if it will go over 400 reviewable
+              lines, split it into ordered, independently shippable changes (1.
+              contract: Zod + endpoints + MSW, 2. UI: components + tests, 3.
+              wiring: route + e2e), each marked <code>depends on:</code>. Then
+              the Gate 1 brief (see <a href="#gates">gates</a>).
+            </p>
+          </details>
+
+          <details open>
+            <summary>
+              Phase 4: Implement loop <span class="tag agent">agent</span> ⇄
+              <span class="tag machine">machine</span>
+            </summary>
+            <ul>
+              <li>
+                Fresh context: in a long conversation, ask the human to
+                <code>/clear</code> and then re-run <code>/build</code>. The
+                agent resumes from <code>notes.md</code>.
+              </li>
+              <li>
+                Snapshot the design into <code>design/</code>, then sync token
+                changes into the styling layer.
+              </li>
+              <li>
+                <code>openspec-apply-change</code> <b>refuses to start</b> while
+                <code>tasks.md</code> says
+                <code>approved: &lt;pending&gt;</code>.
+              </li>
+              <li>
+                One task at a time. A task is ticked only when its test passes.
+                Files go where the fixed folder structure puts them.
+              </li>
+              <li>
+                Fixed stack: <b>RTK Query</b> for server state,
+                <b>Zustand</b> for UI state, <b>React Hook Form + Zod</b> for
+                forms, <b>MSW</b> for mocks. Responses are validated with Zod in
+                <code>transformResponse</code>.
+              </li>
+              <li>
+                A decision the spec doesn’t settle → stop and ask (with a
+                default). If it is minor and reversible → pick the default and
+                log it in <code>notes.md</code>.
+              </li>
+              <li>
+                After each chunk of work → the
+                <code>react-reviewer</code> subagent, then fix what it reports.
+              </li>
+            </ul>
+          </details>
+
+          <details open>
+            <summary>
+              Phase 5: Verify (definition of done)
+              <span class="tag machine">machine</span>
+            </summary>
+            <pre>
+npm run check      # typecheck + lint + format:check + test:coverage + react-doctor
+npm run build      # when adding deps or pages: enforces the bundle budget
+npm run test:e2e   # when a user flow changes: Playwright + axe</pre>
+            <p>
+              Then the <b>visual self-check</b>: Playwright screenshots of every
+              state at every width (states driven by MSW overrides), compared
+              with the artboards, at most 3 rounds. Anything left over is listed
+              under “Differences from the design” in the PR.
+            </p>
+          </details>
+
+          <details open>
+            <summary>
+              Phase 6: Ship + Gate 2 <span class="tag agent">agent</span> →
+              <span class="tag gate">gate</span>
+            </summary>
+            <p>
+              Size check with
+              <code>git diff --numstat origin/HEAD...HEAD</code>. The PR body is
+              written to <code>.git/PR_BODY.md</code>, then
+              <code>gh pr create --body-file</code>. If <code>gh</code> isn’t
+              signed in, the agent gives the human a compare link and the body
+              file path instead. CI runs, a preview URL appears, and the agent
+              stops. The agent answers each review comment, and if it disagrees
+              it says why once and lets the human decide.
+            </p>
+          </details>
+
+          <details open>
+            <summary>Phase 7: Finish + learn</summary>
+            <p>
+              <code>/finish</code> archives the change into the living specs and
+              marks it shipped. Corrections that happened twice become
+              <i>proposed</i> one-line <code>CLAUDE.md</code> rules, added only
+              if the human agrees. This is how the system improves over time.
+            </p>
+          </details>
+        </section>
+
+        <!-- ============================================================ 7 -->
+        <section id="gates">
+          <p class="eyebrow">Human in the loop</p>
+          <h2>The two human gates</h2>
+          <p>
+            A gate is a hard stop: the agent cannot continue until a person
+            decides. Gates only work if they fit into a real person’s day, so
+            each one asks for <b>decisions, not reading</b>. A good gate message
+            fits on one screen and can be answered with “yes”, “yes except 2” or
+            a short correction.
+          </p>
+
+          <div class="two-col">
+            <div class="card gate">
+              <h4>
+                <span class="tag gate">Gate 1</span> Design + tasks.md, before
+                any code
+              </h4>
+              <p>
+                The cheapest place to fix wrong intent, a wrong look, or a PR
+                that will be too big.
+              </p>
+              <pre>
+Gate 1 — add-item   Risk: medium   ~220 reviewable lines
+Builds: a form to add an item to the list
+Design: &lt;canvas link&gt; → page "add-item" (6 screens)
+Your design edits since /feature: button label
+Decisions I need (my default in brackets):
+  1. Max name length? [80 chars]
+  2. Keep form open after save? [no, close]
+New dependencies: none
+Reply "yes" to build, or tell me what to change.</pre>
+            </div>
+            <div class="card gate">
+              <h4>
+                <span class="tag gate">Gate 2</span> PR + preview, before merge
+              </h4>
+              <p>
+                The human clicks through the preview (not just the diff) and
+                reads the lines marked risky.
+              </p>
+              <pre>
+PR #42 — add-item   Risk: medium
+Read carefully:
+  src/features/items/schema.ts:L4-20  (contract)
+  src/features/items/api.ts:L12-30    (cache tags)
+Decisions I made without asking:
+  - Empty-name error copy: "Name is required"
+  - Trim whitespace before save
+Preview: https://…vercel.app
+I will not merge. After merge: /finish add-item</pre>
+            </div>
+          </div>
+
+          <h3>Approval has to be written down</h3>
+          <p>
+            <code>tasks.md</code> ends with
+            <code>approved: &lt;pending&gt;</code>. Only an
+            <b>explicit</b> human approval turns it into
+            <code>approved: Ana, 2026-09-29</code>. Silence, “looks interesting”
+            or a question do not count. The agent writes that line only after
+            the person says yes, and never on its own. Four separate things
+            protect this rule:
+          </p>
+          <ol>
+            <li>
+              <b>Written rule</b> in <code>CLAUDE.md</code>, the pipeline skill
+              and <code>openspec/config.yaml</code>.
+            </li>
+            <li>
+              <b>Skill refusal</b>: <code>openspec-apply-change</code> won’t
+              start on <code>&lt;pending&gt;</code>. Autopilot only picks
+              changes with a human’s line.
+            </li>
+            <li>
+              <b>CI <code>approvals</code> job</b>: fails any PR where a bot or
+              an <code>autopilot/*</code> branch adds an
+              <code>approved:</code> line, or a bot-authored commit touches one.
+            </li>
+            <li>
+              <b>Async option</b>: a <i>spec-only PR</i> routed by CODEOWNERS.
+              The reviewer adds the line in their review, so a merged spec
+              counts as an approved spec.
+            </li>
+          </ol>
+
+          <h3>Risk tiers: attention scales with risk</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tier</th>
+                  <th>Examples</th>
+                  <th>Human involvement</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="tag machine">low</span></td>
+                  <td>copy, styling, a test, a small isolated component</td>
+                  <td>Gate 2 only; a skim is fine</td>
+                </tr>
+                <tr>
+                  <td><span class="tag human">medium</span></td>
+                  <td>new feature UI, state logic, a new dependency</td>
+                  <td>Gate 1 + Gate 2 with a preview click-through</td>
+                </tr>
+                <tr>
+                  <td><span class="tag gate">high</span></td>
+                  <td>contract / schema, auth, money, data deletion, CI</td>
+                  <td>Gate 1 + Gate 2 + a <b>second reviewer</b></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>When the agent must stop and ask (never guess)</h3>
+          <div class="grid">
+            <div class="card">
+              <p>
+                The spec / <code>features.md</code> doesn’t settle a product or
+                UX behaviour: copy, empty/error states, edge cases.
+              </p>
+            </div>
+            <div class="card">
+              <p>
+                The change touches the <b>API contract</b>: a Zod schema, an
+                endpoint, a response shape.
+              </p>
+            </div>
+            <div class="card">
+              <p>
+                It wants a <b>new dependency</b>, or to change
+                <code>architecture.md</code>, <code>CLAUDE.md</code>, CI or
+                hooks.
+              </p>
+            </div>
+            <div class="card">
+              <p>
+                It would delete or rewrite code
+                <b>outside the change’s scope</b>.
+              </p>
+            </div>
+            <div class="card">
+              <p>
+                The <b>same check fails 3 times</b> and it doesn’t know why.
+              </p>
+            </div>
+          </div>
+          <p class="muted">
+            The format is always one concrete question plus a recommended
+            answer, so the human can just reply “yes”.
+          </p>
+          <div class="callout warn">
+            <p>
+              <b>While waiting at a gate</b>, the agent does not start the next
+              step. It says what it’s waiting for and what the human needs to
+              decide, in one or two lines.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============================================================ 8 -->
+        <section id="loops">
+          <p class="eyebrow">Diagram 3</p>
+          <h2>Self-correction: loops inside loops</h2>
+          <p>
+            An agent is useful when it gets <b>fast, automatic feedback</b> on
+            its work and fixes problems before a person sees them. This pipeline
+            has five loops nested inside each other. The inner loops are fast
+            and cheap. The outer loops are slower and involve people.
+          </p>
+
+          <div class="rings" aria-label="Five nested feedback loops">
+            <div class="ring" style="--c: var(--human)">
+              <span class="ring-label"
+                >5 · Review loop
+                <small
+                  >Gate 2 comments → agent fixes → push · hours</small
+                ></span
+              >
+              <div class="ring" style="--c: var(--machine)">
+                <span class="ring-label"
+                  >4 · CI loop
+                  <small
+                    >quality · size · approvals red → fix → push ·
+                    minutes</small
+                  ></span
+                >
+                <div class="ring" style="--c: var(--gate)">
+                  <span class="ring-label"
+                    >3 · Done-gate loop
+                    <small
+                      >check + e2e + screenshots, max 3 attempts</small
+                    ></span
+                  >
+                  <div class="ring" style="--c: var(--agent)">
+                    <span class="ring-label"
+                      >2 · Turn loop
+                      <small
+                        >Stop hook: related tests + doctor · ~1 min</small
+                      ></span
+                    >
+                    <div class="ring" style="--c: var(--machine)">
+                      <span class="ring-label"
+                        >1 · Edit loop
+                        <small
+                          >post-edit: prettier + eslint + tsc · seconds</small
+                        ></span
+                      >
+                      <div class="ring core" style="--c: var(--agent)">
+                        Agent writes code
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h3>Loops 1 + 2 in detail: one agent turn</h3>
+          <div class="figure">
+            <div class="scroller" data-diagram="turn"></div>
+            <p class="figcaption">
+              Exit code <code>2</code> is the key: Claude Code sends the hook’s
+              stderr <i>back to the model</i>, so the fix happens in the same
+              turn. Exit 1 would only show it to the human. The Stop hook checks
+              <code>stop_hook_active</code> so it pushes back only once, which
+              stops an endless loop.
+            </p>
+          </div>
+
+          <h3>Rules that keep loops from running away</h3>
+          <div class="grid">
+            <div class="card">
+              <h4>3 strikes</h4>
+              <p>
+                The same failure after 3 honest attempts → stop, explain what
+                was tried and what is probably wrong.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Never weaken a check</h4>
+              <p>
+                Never disable a test, lint rule or hook to get green. Never
+                lower coverage floors or the bundle budget.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Bounded budgets</h4>
+              <p>
+                The Stop hook has a 180 s timeout. GitHub agents are capped by
+                <code>--max-turns</code> (40 / 80) and
+                <code>timeout-minutes</code> (30 / 45).
+              </p>
+            </div>
+            <div class="card">
+              <h4>Scoped checks</h4>
+              <p>
+                <code>vitest related</code> runs only the tests touching changed
+                files. <code>react-doctor --scope changed</code> ignores older
+                issues.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ 9 -->
+        <section id="hooks">
+          <p class="eyebrow">Diagram 4</p>
+          <h2>Hooks in depth</h2>
+          <p>
+            Hooks are shell scripts that <b>Claude Code</b> (the harness, not
+            the model) runs at fixed points in the agent’s loop. They are
+            configured in <code>.claude/settings.json</code>. The model cannot
+            skip them. It only sees what they print. This is the difference
+            between asking for a rule in a prompt and <b>enforcing</b> it with a
+            tool.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="hookseq"></div>
+            <p class="figcaption">
+              One <code>/build</code> turn: a blocked push, a type error fixed
+              through post-edit, and a clean Stop check.
+            </p>
+          </div>
+
+          <div class="grid">
+            <div class="card machine">
+              <h4>PreToolUse · <code>guard-bash.sh</code></h4>
+              <p><b>When:</b> before every <code>Bash</code> call.</p>
+              <p>
+                <b>Does:</b> reads the command from stdin JSON and blocks
+                merging, force-pushing, pushing to main/master and
+                branch-protection edits, even inside chains,
+                <code>bash -c</code>, <code>git -C</code> or
+                <code>HEAD:master</code> refspecs.
+              </p>
+              <p>
+                <b>Result:</b> exit 2 → the call is refused and Claude reads the
+                reason.
+              </p>
+            </div>
+            <div class="card machine">
+              <h4>PostToolUse · <code>post-edit.sh</code></h4>
+              <p>
+                <b>When:</b> after every <code>Edit</code> / <code>Write</code>.
+              </p>
+              <p>
+                <b>Does:</b> prettier on the file. For <code>.ts/.tsx</code> it
+                then runs eslint on the file and <code>tsc --noEmit</code> on
+                the project.
+              </p>
+              <p>
+                <b>Result:</b> the first 40 lines of errors are sent back with
+                exit 2 → fixed in the same turn.
+              </p>
+            </div>
+            <div class="card machine">
+              <h4>Stop · <code>stop-check.sh</code></h4>
+              <p><b>When:</b> Claude tries to end its turn (180 s timeout).</p>
+              <p>
+                <b>Does:</b> finds changed + untracked
+                <code>src/**/*.ts(x)</code> files, runs
+                <code>vitest related</code> on them, then
+                <code>react-doctor</code> on changed files.
+              </p>
+              <p>
+                <b>Result:</b> on failure, exit 2 and the turn continues. The
+                second time (<code>stop_hook_active</code>) it lets the turn end
+                in red for the human to see.
+              </p>
+            </div>
+          </div>
+
+          <h3>Exit codes: how a hook talks back</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Exit</th>
+                  <th>Meaning</th>
+                  <th>Who sees stderr</th>
+                  <th>Used for</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>0</code></td>
+                  <td>OK, carry on</td>
+                  <td>nobody</td>
+                  <td>clean edit, safe command</td>
+                </tr>
+                <tr>
+                  <td><code>2</code></td>
+                  <td>block / push back</td>
+                  <td><b>the model</b>, which acts on it</td>
+                  <td>all three hooks, for anything the agent must fix</td>
+                </tr>
+                <tr>
+                  <td>other</td>
+                  <td>non-blocking error</td>
+                  <td>the human only</td>
+                  <td>
+                    deliberately not used: the agent would carry on unaware
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <details>
+            <summary>
+              Show the hook wiring in <code>.claude/settings.json</code>
+            </summary>
+            <pre>
+"hooks": {
+  "PreToolUse":  [{ "matcher": "Bash",
+                    "hooks": [{ "type": "command", "command": ".claude/hooks/guard-bash.sh" }] }],
+  "PostToolUse": [{ "matcher": "Edit|Write",
+                    "hooks": [{ "type": "command", "command": ".claude/hooks/post-edit.sh" }] }],
+  "Stop":        [{ "hooks": [{ "type": "command", "command": ".claude/hooks/stop-check.sh",
+                               "timeout": 180 }] }]
+}</pre>
+          </details>
+          <details>
+            <summary>
+              Show <code>post-edit.sh</code> (the core of the edit loop)
+            </summary>
+            <pre>
+file=$(jq -r '.tool_input.file_path // empty')
+npx --no-install prettier --write --ignore-unknown "$file"
+case "$file" in *.ts | *.tsx) ;; *) exit 0 ;; esac
+if ! out=$(npx --no-install eslint --no-warn-ignored "$file" 2>&amp;1); then
+  printf 'ESLint errors in %s:\n%s\n' "$file" "$out" | head -40 &gt;&amp;2; exit 2
+fi
+if ! out=$(npx --no-install tsc --noEmit --pretty false 2>&amp;1); then
+  printf 'Typecheck failed after editing %s:\n%s\n' "$file" "$out" | head -40 &gt;&amp;2; exit 2
+fi</pre>
+          </details>
+        </section>
+
+        <!-- ============================================================ 10 -->
+        <section id="permissions">
+          <p class="eyebrow">Diagram 5</p>
+          <h2>Permissions + the Bash guard</h2>
+          <p>
+            Before the hook runs, permission rules in
+            <code>settings.json</code> sort commands into three buckets:
+          </p>
+          <div class="grid">
+            <div class="card gate">
+              <h4>deny: never allowed</h4>
+              <ul>
+                <li><code>gh pr merge</code></li>
+                <li><code>git push --force</code> / <code>-f</code></li>
+                <li><code>git push origin main|master</code></li>
+                <li>Edit generated <code>generatedApi.ts</code></li>
+                <li>Edit <code>mockServiceWorker.js</code></li>
+              </ul>
+            </div>
+            <div class="card human">
+              <h4>ask: human confirms first</h4>
+              <ul>
+                <li>
+                  <code>npm install</code> / <code>i</code> /
+                  <code>uninstall</code>
+                </li>
+                <li><code>git push</code>, <code>gh pr create</code></li>
+                <li>Edit <code>.github/**</code>, <code>CLAUDE.md</code></li>
+                <li>Edit <code>.claude/settings.json</code></li>
+              </ul>
+            </div>
+            <div class="card machine">
+              <h4>allow: everything else</h4>
+              <p>
+                Reading, editing source, running <code>npm run …</code>, tests,
+                git on feature branches. The hooks still check every call.
+              </p>
+            </div>
+          </div>
+          <p>
+            Deny rules match by <b>prefix</b>, so
+            <code>cd x &amp;&amp; gh pr merge 3</code> or
+            <code>git push origin HEAD:master</code> would get past them. That
+            is why <code>guard-bash.sh</code>
+            exists: it takes the command apart and checks each piece.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="guard"></div>
+          </div>
+
+          <div class="tester">
+            <label for="guard-input"
+              >Try it: would the agent be allowed to run this?</label
+            >
+            <div class="tester-row">
+              <input
+                id="guard-input"
+                type="text"
+                spellcheck="false"
+                autocomplete="off"
+                placeholder="type a bash command…"
+              />
+              <select id="guard-branch" aria-label="Current branch">
+                <option value="feat/add-item">on feat/add-item</option>
+                <option value="master">on master</option>
+              </select>
+            </div>
+            <div class="chips">
+              <button
+                type="button"
+                data-cmd="git push -u origin feat/add-item"
+                data-branch="feat/add-item"
+              >
+                git push -u origin feat/add-item
+              </button>
+              <button type="button" data-cmd="git push origin HEAD:master">
+                git push origin HEAD:master
+              </button>
+              <button type="button" data-cmd="cd app &amp;&amp; gh pr merge 3">
+                cd app &amp;&amp; gh pr merge 3
+              </button>
+              <button type="button" data-cmd="git -C . push --force-with-lease">
+                git -C . push --force-with-lease
+              </button>
+              <button
+                type="button"
+                data-cmd='git commit -m "do not gh pr merge yet"'
+              >
+                git commit -m "do not gh pr merge yet"
+              </button>
+              <button type="button" data-cmd='bash -c "gh pr merge 3"'>
+                bash -c "gh pr merge 3"
+              </button>
+              <button type="button" data-cmd="git push" data-branch="master">
+                git push (on master)
+              </button>
+              <button
+                type="button"
+                data-cmd="gh api repos/o/r/branches/master/protection -X DELETE"
+              >
+                gh api …/protection -X DELETE
+              </button>
+              <button type="button" data-cmd="npm install lodash">
+                npm install lodash
+              </button>
+              <button type="button" data-cmd="npm run check">
+                npm run check
+              </button>
+            </div>
+            <div id="guard-out" class="verdict" aria-live="polite" hidden></div>
+            <p class="muted small">
+              A JavaScript copy of the rules in <code>guard-bash.sh</code> +
+              <code>permissions</code>, for teaching. GitHub branch protection
+              is still the real backstop.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============================================================ 11 -->
+        <section id="agents">
+          <p class="eyebrow">Diagram 6</p>
+          <h2>Agents, skills and rules</h2>
+          <p>
+            An <b>agent</b> is a model working in a loop with tools. A
+            <b>subagent</b> is a separate agent with its own fresh context and a
+            restricted tool list, used so a big search or review doesn’t fill up
+            the main conversation. <b>Skills</b> are instructions loaded on
+            demand. <b>Rules</b> are always-on constraints.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="agents"></div>
+          </div>
+
+          <h3>The agents</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Runs where / when</th>
+                  <th>Tools</th>
+                  <th>Job</th>
+                  <th>Must not</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Main agent</b></td>
+                  <td>Your Claude Code session, driven by the six commands</td>
+                  <td>all, filtered by permissions + hooks</td>
+                  <td>Plan, design, spec, implement, verify, open PRs</td>
+                  <td>
+                    merge, push to default branch, write
+                    <code>approved:</code> on its own
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>react-reviewer</b></td>
+                  <td>
+                    Subagent, after each coherent chunk of work and before the
+                    PR
+                  </td>
+                  <td>Read, Grep, Glob, Bash</td>
+                  <td>
+                    Report bugs, performance, a11y, convention and spec-fit
+                    problems. Run <code>react-doctor</code>. List “unasked
+                    decisions” for the PR
+                  </td>
+                  <td>edit code (it reports only; the main agent fixes)</td>
+                </tr>
+                <tr>
+                  <td><b>codebase-explorer</b></td>
+                  <td>
+                    Subagent, when research is needed (“where is X handled?”)
+                  </td>
+                  <td>Read, Grep, Glob</td>
+                  <td>
+                    Return a compact map: relevant files, entry points,
+                    patterns, risks
+                  </td>
+                  <td>implement anything; read the whole repo</td>
+                </tr>
+                <tr>
+                  <td><b>@claude</b></td>
+                  <td>
+                    GitHub Action, on an issue/PR comment mentioning it (writers
+                    only)
+                  </td>
+                  <td>npm run, vitest, git, gh read</td>
+                  <td>
+                    Branch, implement, test, open a PR from an issue; answer
+                    review comments
+                  </td>
+                  <td>
+                    <code>gh pr merge</code>, <code>gh api</code>, force push,
+                    push to main
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Autopilot</b></td>
+                  <td>
+                    GitHub Action, weekday 02:00 (off until enabled) or manual
+                  </td>
+                  <td>
+                    allow-listed edit, npm run, git on <code>autopilot/*</code>
+                  </td>
+                  <td>Build exactly ONE human-approved change into a PR</td>
+                  <td>guess answers, install deps, merge, batch changes</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>react-reviewer output format</h3>
+          <pre>
+src/features/items/api.ts:L23: 🟡 risk: no Zod guard on response. Add transformResponse with itemSchema.parse.
+src/features/items/components/ItemForm.tsx:L41: 🔴 bug: submit stays enabled while saving. Disable on isLoading.
+react-doctor: 94 (no new regressions)
+Unasked decisions:
+  - error toast copy "Could not save item"</pre>
+          <p class="muted small">
+            🔴 bug · 🟡 risk · 🔵 nit · ❓ question. One line each, ordered by
+            severity, each with a concrete fix. No praise, no hedging.
+          </p>
+
+          <h3>Skills: loaded when relevant</h3>
+          <div class="grid">
+            <div class="card agent">
+              <h4>feature-pipeline</h4>
+              <p>
+                The master workflow: 7 steps, 2 gates, the testing standard,
+                when to use the subagents, and guardrails. Plus
+                <code>claude-design.md</code> for canvas conventions.
+              </p>
+            </div>
+            <div class="card agent">
+              <h4>openspec-propose</h4>
+              <p>
+                Creates the change folder and all artifacts in one step.
+                Planning only: it never edits code.
+              </p>
+            </div>
+            <div class="card agent">
+              <h4>openspec-apply-change</h4>
+              <p>
+                Works through <code>tasks.md</code>. Refuses to run on
+                <code>approved: &lt;pending&gt;</code>.
+              </p>
+            </div>
+            <div class="card agent">
+              <h4>openspec-archive / sync-specs</h4>
+              <p>
+                Merges delta specs into <code>openspec/specs/</code> after a
+                merge.
+              </p>
+            </div>
+            <div class="card agent">
+              <h4>openspec-explore</h4>
+              <p>
+                Thinking-partner mode: reads and discusses, never implements.
+              </p>
+            </div>
+          </div>
+
+          <h3>Rules: always on</h3>
+          <ul>
+            <li>
+              <b><code>CLAUDE.md</code></b> is loaded every session: commands,
+              gates, risk tiers, component conventions, the fixed folder layout,
+              the state/data/forms libraries, API contract rules, PR rules and
+              the definition of done.
+            </li>
+            <li>
+              <b><code>.claude/rules/*.md</code></b> are <i>path-scoped</i> code
+              samples (RTK Query, Zustand, forms, MSW). They load only when a
+              matching file is opened, which keeps the context small.
+            </li>
+            <li>
+              <b><code>openspec/config.yaml</code></b> sets the rules for every
+              proposal, design and task list.
+            </li>
+            <li>
+              <b>ESLint import boundaries</b> enforce the architecture:
+              <code>lib/</code> imports no app layer, and
+              <code>components/</code> never imports <code>features/</code>.
+            </li>
+          </ul>
+        </section>
+
+        <!-- ============================================================ 12 -->
+        <section id="autopilot">
+          <p class="eyebrow">Diagram 7</p>
+          <h2>Autopilot + @claude: agents on GitHub</h2>
+          <p>
+            The same pipeline can run with nobody at the keyboard, because the
+            gates don’t depend on anyone being present. <b>Gate 1</b> already
+            happened (a human-approved change on the default branch), and
+            <b>Gate 2</b> still happens (a PR someone reviews in the morning).
+            When autopilot is unsure, it
+            <b>opens an issue instead of guessing</b>.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="autopilot"></div>
+            <p class="figcaption">
+              Every “no” ends in something a human can act on: an issue or a
+              draft PR. Autopilot builds UI from the <code>design/</code> copy
+              because it can’t open claude.ai.
+            </p>
+          </div>
+          <div class="callout tip">
+            <p>
+              <b>Safety settings:</b> <code>concurrency: autopilot</code> (one
+              run at a time), an explicit
+              <code>--allowedTools</code> allow-list,
+              <code>--disallowedTools</code> for merge/api/force/install, pushes
+              only to <code>autopilot/*</code>, and CI’s
+              <code>approvals</code> job rejects any <code>approved:</code> line
+              from an <code>autopilot/*</code> branch. On fork PRs the API key
+              isn’t available. Never use <code>pull_request_target</code> with
+              untrusted code.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============================================================ 13 -->
+        <section id="fix">
+          <p class="eyebrow">Diagram 8</p>
+          <h2>The /fix lane: test-first bug fixing</h2>
+          <div class="two-col">
+            <div>
+              <p>
+                Qualifies only if <b>all five</b> are true. Otherwise the agent
+                says which one failed and sends you to <code>/feature</code>:
+              </p>
+              <ol>
+                <li>
+                  Correct behaviour is <b>already stated</b> in
+                  <code>openspec/specs/</code> or <code>features.md</code>. If
+                  the spec is silent, it is a behaviour change, not a bug.
+                </li>
+                <li>No new screen, state or design change.</li>
+                <li>No API contract change.</li>
+                <li>No new dependency.</li>
+                <li>About 100 reviewable lines or fewer.</li>
+              </ol>
+              <div class="callout">
+                <p>
+                  <b>Why RED first?</b> A test that fails
+                  <i>for the reason in the report</i> proves the bug is
+                  understood. Once it passes, it guards against the bug coming
+                  back. If the agent can’t make it fail, it stops rather than
+                  guessing at a fix.
+                </p>
+              </div>
+              <p>
+                The PR says
+                <code
+                  >OpenSpec change: none — /fix (restores
+                  openspec/specs/&lt;capability&gt;)</code
+                >, names the fixed line and the test, and stops at Gate 2. No
+                <code>/finish</code> is needed.
+              </p>
+            </div>
+            <div class="figure" style="margin-top: 0">
+              <div class="scroller" data-diagram="fix"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ 14 -->
+        <section id="design">
+          <p class="eyebrow">Diagram 9</p>
+          <h2>Design → code: one-way flow</h2>
+          <p>
+            <b>Claude Design is the source of truth for the UI.</b> The human
+            edits there. <code>design/</code> in the repo is a copy
+            <i>as last built</i>, written only by <code>/build</code> and
+            <code>/sync-ui</code>, so CI and autopilot can use it without
+            claude.ai.
+          </p>
+          <div class="figure">
+            <div class="scroller" data-diagram="tokens"></div>
+          </div>
+          <h3>Classifying a design edit</h3>
+          <div class="two-col">
+            <div class="card machine">
+              <h4>Visual → code it after a “yes”</h4>
+              <p>
+                colour · font · size · spacing · radius · border · shadow ·
+                alignment · order · copy text · a token value
+              </p>
+            </div>
+            <div class="card gate">
+              <h4>Behaviour → needs a spec + Gate 1</h4>
+              <p>
+                an input, button, link, screen or state added or removed · a
+                changed validation rule or flow
+              </p>
+            </div>
+          </div>
+          <p class="muted">
+            Hex values are never copied into components. If a design would fail
+            an axe check, the agent says so at Gate 1 or in the PR instead of
+            shipping it.
+          </p>
+        </section>
+
+        <!-- ============================================================ 15 -->
+        <section id="ci">
+          <p class="eyebrow">Diagram 10</p>
+          <h2>CI + pull requests</h2>
+          <div class="figure">
+            <div class="scroller" data-diagram="ci"></div>
+          </div>
+          <div class="grid">
+            <div class="card machine">
+              <h4>quality job</h4>
+              <p>
+                typecheck → lint → format:check → test:coverage (floors in
+                <code>vitest.config.ts</code>) → build (per-chunk bundle budget)
+                → Playwright e2e + axe →
+                <code>react-doctor --scope changed</code>.
+              </p>
+            </div>
+            <div class="card machine">
+              <h4>PR size job</h4>
+              <p>
+                Counts added + deleted lines, <b>excluding</b> tests, mocks,
+                <code>openspec/</code>, <code>design/</code>, e2e, lockfile and
+                generated code. Over 400 → fail. Only a human adds the
+                <code>large-pr-approved</code> label.
+              </p>
+            </div>
+            <div class="card machine">
+              <h4>approvals job</h4>
+              <p>
+                Checks the diff of <code>openspec/changes/*/tasks.md</code> for
+                new <code>approved:</code> lines and fails if a bot or an
+                autopilot branch added them.
+              </p>
+            </div>
+          </div>
+          <h3>The PR template makes review cheap</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Section</th>
+                  <th>Why it exists</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>What changed (3 bullets)</td>
+                  <td>What the user gets, not the diff</td>
+                </tr>
+                <tr>
+                  <td>OpenSpec change · split · risk tier · written by</td>
+                  <td>Tells the reviewer how much attention to give</td>
+                </tr>
+                <tr>
+                  <td>Design: link, screenshots, differences</td>
+                  <td>Visual review without running the app</td>
+                </tr>
+                <tr>
+                  <td><b>Review carefully</b></td>
+                  <td>The exact lines where a bug would hurt, and why</td>
+                </tr>
+                <tr>
+                  <td><b>Decisions I made without asking</b></td>
+                  <td>
+                    Judgement calls to confirm or overrule (from
+                    <code>notes.md</code>)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Safe to skim</td>
+                  <td>Generated code, fixtures, styling, test boilerplate</td>
+                </tr>
+                <tr>
+                  <td>How to verify</td>
+                  <td>
+                    Preview URL + a click-through that takes under 2 minutes
+                  </td>
+                </tr>
+                <tr>
+                  <td>Reviewer checklist</td>
+                  <td>
+                    “I clicked the preview”, “I answered every decision”,
+                    “repeated corrections → rule”
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ============================================================ 16 -->
+        <section id="defence">
+          <p class="eyebrow">Safety model</p>
+          <h2>Defence in depth: why the agent can’t ship on its own</h2>
+          <p>
+            No single layer is trusted. Each one catches what the layer before
+            it missed:
+          </p>
+          <div class="layers">
+            <div class="layer">
+              <span class="num">1</span>
+              <div>
+                <h4>Instructions</h4>
+                <p>
+                  <code>CLAUDE.md</code> + skills say “never merge, never
+                  approve yourself”. This works most of the time, but it is only
+                  a prompt.
+                </p>
+              </div>
+            </div>
+            <div class="layer">
+              <span class="num">2</span>
+              <div>
+                <h4>Permission rules</h4>
+                <p>
+                  <code>deny</code> for merge / force / push-to-main;
+                  <code>ask</code> for installs, pushes, PRs, and edits to CI or
+                  <code>CLAUDE.md</code>.
+                </p>
+              </div>
+            </div>
+            <div class="layer">
+              <span class="num">3</span>
+              <div>
+                <h4>PreToolUse guard</h4>
+                <p>
+                  <code>guard-bash.sh</code> catches what prefix rules miss:
+                  chains, <code>bash -c</code>, refspecs, <code>gh api</code>.
+                </p>
+              </div>
+            </div>
+            <div class="layer">
+              <span class="num">4</span>
+              <div>
+                <h4>Tool lists on GitHub agents</h4>
+                <p>
+                  <code>--allowedTools</code> / <code>--disallowedTools</code>,
+                  turn and time limits, branch-name restrictions.
+                </p>
+              </div>
+            </div>
+            <div class="layer">
+              <span class="num">5</span>
+              <div>
+                <h4>CI checks</h4>
+                <p>
+                  quality, size and bot-approval detection. Nothing merges while
+                  a check is red.
+                </p>
+              </div>
+            </div>
+            <div class="layer">
+              <span class="num">6</span>
+              <div>
+                <h4>Branch protection + CODEOWNERS</h4>
+                <p>
+                  Required checks, 1 review and Code Owner review for
+                  <code>openspec/</code>, schemas, services,
+                  <code>.claude/</code> and <code>.github/</code>. GitHub
+                  enforces this whatever the agent does.
+                </p>
+              </div>
+            </div>
+            <div class="layer">
+              <span class="num">7</span>
+              <div>
+                <h4>A human merges</h4>
+                <p>Gate 2. The last and most important layer.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================ 17 -->
+        <section id="files">
+          <p class="eyebrow">Reference</p>
+          <h2>Where everything lives</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>What</th>
+                  <th>Where</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Conventions + human-in-the-loop rules</td>
+                  <td><code>CLAUDE.md</code></td>
+                </tr>
+                <tr>
+                  <td>Product intent</td>
+                  <td><code>features.md</code></td>
+                </tr>
+                <tr>
+                  <td>Tech decisions, tokens, design links, API source</td>
+                  <td><code>architecture.md</code></td>
+                </tr>
+                <tr>
+                  <td>Spec rules (risk, size, approved line)</td>
+                  <td><code>openspec/config.yaml</code></td>
+                </tr>
+                <tr>
+                  <td>Living specs / open changes</td>
+                  <td>
+                    <code>openspec/specs/</code> ·
+                    <code>openspec/changes/</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Commands</td>
+                  <td>
+                    <code
+                      >.claude/commands/{start,feature,build,sync-ui,finish,fix}.md</code
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Workflow skill + design rules</td>
+                  <td><code>.claude/skills/feature-pipeline/</code></td>
+                </tr>
+                <tr>
+                  <td>Subagents</td>
+                  <td>
+                    <code
+                      >.claude/agents/{react-reviewer,codebase-explorer}.md</code
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Hooks</td>
+                  <td>
+                    <code
+                      >.claude/hooks/{guard-bash,post-edit,stop-check}.sh</code
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Permissions + hook wiring</td>
+                  <td><code>.claude/settings.json</code></td>
+                </tr>
+                <tr>
+                  <td>Path-scoped code samples</td>
+                  <td>
+                    <code>.claude/rules/{rtk-query,zustand,forms,msw}.md</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>CI / size / agents on GitHub</td>
+                  <td>
+                    <code
+                      >.github/workflows/{ci,pr-size,claude,autopilot}.yml</code
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>Who reviews what · PR shape</td>
+                  <td>
+                    <code>.github/CODEOWNERS</code> ·
+                    <code>.github/pull_request_template.md</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Design copy as last built</td>
+                  <td><code>design/</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ============================================================ 18 -->
+        <section id="daily">
+          <p class="eyebrow">TL;DR</p>
+          <h2>The daily loop</h2>
+          <ol>
+            <li>
+              <code>/feature &lt;idea&gt;</code> → requirements, design (reused
+              or new), spec.
+            </li>
+            <li>Edit the design on claude.ai until it looks right.</li>
+            <li>
+              <code>/build &lt;change&gt;</code> → answer the Gate 1 brief → the
+              agent implements, and hooks, tests, react-doctor and screenshots
+              catch problems along the way.
+            </li>
+            <li>PR opens → CI runs → a preview deploy appears.</li>
+            <li>
+              <b>Review the PR + preview</b> (Gate 2) → merge →
+              <code>/finish &lt;change&gt;</code>.
+            </li>
+            <li>
+              Changed a built screen’s design later? <code>/sync-ui</code>.
+            </li>
+            <li>
+              Bug in something already shipped? <code>/fix &lt;bug&gt;</code>.
+            </li>
+          </ol>
+          <p><b>People decide at two gates; tools and the agent handle everything in between.</b></p>
+
+          <h3>Teaching notes: ideas to discuss in class</h3>
+          <div class="grid">
+            <div class="card">
+              <h4>Prompts vs. enforcement</h4>
+              <p>
+                Why is “never merge” written in <code>CLAUDE.md</code>
+                <i>and</i> in a deny rule <i>and</i> in a hook <i>and</i> in
+                branch protection? Ask students to find a command that gets past
+                the deny list but not the hook.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Feedback speed</h4>
+              <p>
+                Why is the edit loop seconds and the review loop hours? What
+                happens to agent quality with no typecheck hook?
+              </p>
+            </div>
+            <div class="card">
+              <h4>Context is a budget</h4>
+              <p>
+                Subagents, path-scoped rules, <code>/clear</code> +
+                <code>notes.md</code> for resuming: all ways to keep the main
+                context small.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Specs as contracts</h4>
+              <p>
+                The <code>approved:</code> line turns “the human agreed” into a
+                checkable fact that CI and autopilot can read.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Small PRs</h4>
+              <p>
+                400 lines is roughly what a person can review well. The agent
+                splits work so a human can still review it properly.
+              </p>
+            </div>
+            <div class="card">
+              <h4>Escalate, don’t loop</h4>
+              <p>
+                The 3-strike rule and “ask with a default” answer: when should
+                an agent stop?
+              </p>
+            </div>
+          </div>
+
+          <footer>
+            Built from the <code>react-sdd-starter</code> template’s
+            <code>.claude/</code>, <code>.github/</code>,
+            <code>openspec/</code> and <code>CLAUDE.md</code>. Diagrams are
+            drawn live from <code>diagrams.js</code> /
+            <code>diagrams2.js</code>; edit the data there to change them.
+          </footer>
+        </section>
+      </main>
+    </div>
+    <script src="renderer.js"></script>
+    <script src="diagrams.js"></script>
+    <script src="diagrams2.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
